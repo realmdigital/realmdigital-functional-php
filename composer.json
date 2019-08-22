@@ -1,5 +1,6 @@
 {
     "name": "realmdigital/functional-php",
+    "version": "1.9.1",
     "description": "Functional primitives for PHP",
     "keywords": ["functional"],
     "license": "MIT",

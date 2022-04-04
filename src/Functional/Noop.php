@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (C) 2011-2017 by Gilles Crettenand <gilles@crettenand.info>
+ * Copyright (C) 2011-2021 by Lars Strojny <lstrojny@php.net>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,32 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 namespace Functional;
 
-use Functional\Exceptions\MatchException;
-
-use function Functional\head;
-use function Functional\tail;
-use function Functional\if_else;
-
 /**
- * Performs an operation checking for the given conditions
- *
- * @param array $conditions the conditions to check against
- *
- * @return callable|null the function that calls the callable of the first truthy condition
+ * A no-operation function.
+ * @no-named-arguments
  */
-function match(array $conditions)
+function noop()
 {
-    MatchException::assert($conditions, __FUNCTION__);
-
-    return function ($value) use ($conditions) {
-        if (empty($conditions)) {
-            return null;
-        }
-
-        list($if, $then) = head($conditions);
-
-        return if_else($if, $then, match(tail($conditions)))($value);
-    };
 }

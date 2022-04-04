@@ -1,13 +1,15 @@
 {
     "name": "realmdigital/functional-php",
     "description": "Functional primitives for PHP",
-    "keywords": ["functional"],
+    "keywords": [
+        "functional"
+    ],
     "license": "MIT",
     "authors": [
         {
             "name": "Lars Strojny",
             "email": "lstrojny@php.net",
-            "homepage": "http://usrportage.de"
+            "homepage": "https://usrportage.de"
         },
         {
             "name": "Max Beutel",
@@ -15,14 +17,19 @@
         }
     ],
     "require": {
-        "php": "~7"
+        "php": "^7.1|~8"
     },
     "require-dev": {
-        "phpunit/phpunit": "~6"
+        "squizlabs/php_codesniffer": "~3.0",
+        "phpunit/phpunit": "^7.0 || ^8.0 || ^9.5",
+        "friendsofphp/php-cs-fixer": "^2.17"
     },
     "autoload": {
-        "psr-4": {"Functional\\": "src/Functional"},
+        "psr-4": {
+            "Functional\\": "src/Functional"
+        },
         "files": [
+            "src/Functional/Ary.php",
             "src/Functional/Average.php",
             "src/Functional/ButLast.php",
             "src/Functional/Capture.php",
@@ -32,12 +39,14 @@
             "src/Functional/Compose.php",
             "src/Functional/Concat.php",
             "src/Functional/Contains.php",
+            "src/Functional/Converge.php",
             "src/Functional/Curry.php",
             "src/Functional/CurryN.php",
             "src/Functional/Difference.php",
             "src/Functional/DropFirst.php",
             "src/Functional/DropLast.php",
             "src/Functional/Each.php",
+            "src/Functional/Entries.php",
             "src/Functional/Equal.php",
             "src/Functional/ErrorToException.php",
             "src/Functional/Every.php",
@@ -49,6 +58,7 @@
             "src/Functional/FlatMap.php",
             "src/Functional/Flatten.php",
             "src/Functional/Flip.php",
+            "src/Functional/FromEntries.php",
             "src/Functional/GreaterThan.php",
             "src/Functional/GreaterThanOrEqual.php",
             "src/Functional/Group.php",
@@ -69,12 +79,14 @@
             "src/Functional/LessThanOrEqual.php",
             "src/Functional/LexicographicCompare.php",
             "src/Functional/Map.php",
-            "src/Functional/Match.php",
+            "src/Functional/Matching.php",
             "src/Functional/Maximum.php",
             "src/Functional/Memoize.php",
             "src/Functional/Minimum.php",
             "src/Functional/None.php",
+            "src/Functional/Noop.php",
             "src/Functional/Not.php",
+            "src/Functional/OmitKeys.php",
             "src/Functional/PartialAny.php",
             "src/Functional/PartialLeft.php",
             "src/Functional/PartialMethod.php",
@@ -89,6 +101,7 @@
             "src/Functional/ReduceRight.php",
             "src/Functional/Reindex.php",
             "src/Functional/Reject.php",
+            "src/Functional/Repeat.php",
             "src/Functional/Retry.php",
             "src/Functional/Select.php",
             "src/Functional/SelectKeys.php",
@@ -102,22 +115,25 @@
             "src/Functional/Tap.php",
             "src/Functional/Tail.php",
             "src/Functional/TailRecursion.php",
+            "src/Functional/TakeLeft.php",
+            "src/Functional/TakeRight.php",
             "src/Functional/True.php",
             "src/Functional/Truthy.php",
             "src/Functional/Unique.php",
+            "src/Functional/ValueToKey.php",
             "src/Functional/With.php",
             "src/Functional/Zip.php",
             "src/Functional/ZipAll.php"
         ]
     },
     "autoload-dev": {
-        "psr-4": {"Functional\\Tests\\": "tests/Functional"}
-    },
-    "extra": {
-        "branch-alias": { "dev-master": "1.2-dev" }
+        "psr-4": {
+            "Functional\\Tests\\": "tests/Functional"
+        }
     },
     "scripts": {
-        "tests": "phpunit",
+        "tests": "vendor/bin/phpunit",
+        "coding-style": "vendor/bin/phpcs && vendor/bin/php-cs-fixer fix --dry-run --diff --config=.php_cs.dist",
         "clear": "rm -rf vendor/"
     }
 }

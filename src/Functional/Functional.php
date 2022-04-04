@@ -1,9 +1,23 @@
 <?php
 
+/**
+ * @package   Functional-php
+ * @author    Lars Strojny <lstrojny@php.net>
+ * @copyright 2011-2021 Lars Strojny
+ * @license   https://opensource.org/licenses/MIT MIT
+ * @link      https://github.com/lstrojny/functional-php
+ */
+
 namespace Functional;
 
 final class Functional
 {
+
+    /**
+     * @see \Function\ary
+     */
+    const ary = '\Functional\ary';
+
     /**
      * @see \Functional\average
      */
@@ -50,6 +64,11 @@ final class Functional
     const contains = '\Functional\contains';
 
     /**
+     * @see \Functional\converge
+     */
+    const converge = '\Functional\converge';
+
+    /**
      * @see \Functional\curry
      */
     const curry = '\Functional\curry';
@@ -78,6 +97,11 @@ final class Functional
      * @see \Functional\each
      */
     const each = '\Functional\each';
+
+    /**
+     * @see \Functional\entries
+     */
+    const entries = '\Functional\entries';
 
     /**
      * @see \Functional\equal
@@ -133,6 +157,11 @@ final class Functional
      * @see \Functional\flip
      */
     const flip = '\Functional\flip';
+
+    /**
+     * @see \Functional\from_entries
+     */
+    const from_entries = '\Functional\from_entries';
 
     /**
      * @see \Functional\greater_than
@@ -235,9 +264,15 @@ final class Functional
     const map = '\Functional\map';
 
     /**
-     * @see \Functional\match
+     * @see \Functional\matching
+     * @deprecated
      */
     const match = '\Functional\match';
+
+    /**
+     * @see \Functional\matching
+     */
+    const matching = '\Functional\matching';
 
     /**
      * @see \Functional\maximum
@@ -260,9 +295,19 @@ final class Functional
     const none = '\Functional\none';
 
     /**
+     * @see \Functional\noop
+     */
+    const noop = '\Functional\noop';
+
+    /**
      * @see \Functional\not
      */
     const not = '\Functional\not';
+
+    /**
+     * @see \Functional\omit_keys
+     */
+    const omit_keys = '\Functional\omit_keys';
 
     /**
      * @see \Functional\partial_any
@@ -345,6 +390,11 @@ final class Functional
     const reject = '\Functional\reject';
 
     /**
+     * @see \Functional\repeat
+     */
+    const repeat = '\Functional\repeat';
+
+    /**
      * @see \Functional\retry
      */
     const retry = '\Functional\retry';
@@ -405,6 +455,16 @@ final class Functional
     const tail_recursion = '\Functional\tail_recursion';
 
     /**
+     * @see \Functional\take_left
+     */
+    const take = '\Functional\take_left';
+
+    /**
+     * @see \Functional\take_right
+     */
+    const take_right = '\Functional\take_right';
+
+    /**
      * @see \Functional\tap
      */
     const tap = '\Functional\tap';
@@ -423,6 +483,11 @@ final class Functional
      * @see \Functional\unique
      */
     const unique = '\Functional\unique';
+
+    /**
+     * @see \Functional\value_to_key
+     */
+    const value_to_key = '\Functional\value_to_key';
 
     /**
      * @see \Functional\with

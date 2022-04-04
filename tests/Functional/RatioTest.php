@@ -1,33 +1,35 @@
 <?php
+
 /**
- * Copyright (C) 2011-2017 by Lars Strojny <lstrojny@php.net>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * @package   Functional-php
+ * @author    Lars Strojny <lstrojny@php.net>
+ * @copyright 2011-2021 Lars Strojny
+ * @license   https://opensource.org/licenses/MIT MIT
+ * @link      https://github.com/lstrojny/functional-php
  */
+
 namespace Functional\Tests;
 
 use ArrayIterator;
+use Traversable;
+
 use function Functional\ratio;
 
 class RatioTest extends AbstractTestCase
 {
-    public function setUp()
+    /** @var int[] */
+    private $intArray;
+
+    /** @var Traversable|int[] */
+    private $intIterator;
+
+    /** @var float[] */
+    private $floatArray;
+
+    /** @var Traversable|float[] */
+    private $floatIterator;
+
+    protected function setUp(): void
     {
         parent::setUp();
         $this->intArray = [1 => 1, 2, "foo" => 3, 4];
@@ -36,23 +38,23 @@ class RatioTest extends AbstractTestCase
         $this->floatIterator = new ArrayIterator($this->floatArray);
     }
 
-    public function test()
+    public function test(): void
     {
-        $this->assertSame(1, ratio([1]));
-        $this->assertSame(1, ratio(new ArrayIterator([1])));
-        $this->assertSame(1, ratio($this->intArray, 24));
-        $this->assertSame(1, ratio($this->intIterator, 24));
-        $this->assertEquals(-1, ratio($this->floatArray, -1.65), '', 0.01);
-        $this->assertEquals(-1, ratio($this->floatIterator, -1.65), '', 0.01);
+        self::assertSame(1, ratio([1]));
+        self::assertSame(1, ratio(new ArrayIterator([1])));
+        self::assertSame(1, ratio($this->intArray, 24));
+        self::assertSame(1, ratio($this->intIterator, 24));
+        self::assertEqualsWithDelta(-1, ratio($this->floatArray, -1.65), 0.01);
+        self::assertEqualsWithDelta(-1, ratio($this->floatIterator, -1.65), 0.01);
     }
 
     /** @dataProvider Functional\Tests\MathDataProvider::injectErrorCollection */
-    public function testElementsOfWrongTypeAreIgnored($collection)
+    public function testElementsOfWrongTypeAreIgnored($collection): void
     {
-        $this->assertEquals(0.333, ratio($collection), '', 0.001);
+        self::assertEqualsWithDelta(0.333, ratio($collection), 0.001);
     }
 
-    public function testPassNoCollection()
+    public function testPassNoCollection(): void
     {
         $this->expectArgumentError('Functional\ratio() expects parameter 1 to be array or instance of Traversable');
         ratio('invalidCollection', 'strlen');

@@ -1,47 +1,42 @@
 <?php
+
 /**
- * Copyright (C) 2011-2017 by Lars Strojny <lstrojny@php.net>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the 'Software'), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * @package   Functional-php
+ * @author    Lars Strojny <lstrojny@php.net>
+ * @copyright 2011-2021 Lars Strojny
+ * @license   https://opensource.org/licenses/MIT MIT
+ * @link      https://github.com/lstrojny/functional-php
  */
+
 namespace Functional\Tests;
 
 use RuntimeException;
+
 use function Functional\suppress_error;
+
+use const E_USER_ERROR;
 
 class SuppressErrorTest extends AbstractTestCase
 {
-    public function testErrorIsSuppressed()
+    public function testErrorIsSuppressed(): void
     {
-        $fn = suppress_error('strpos');
+        $origFn = function () {
+            \trigger_error('Some error', E_USER_ERROR);
+        };
 
-        $this->assertNull($fn([], 0));
+        $fn = suppress_error($origFn);
+
+        self::assertNull($fn());
     }
 
-    public function testFunctionIsWrapped()
+    public function testFunctionIsWrapped(): void
     {
         $fn = suppress_error('substr');
 
-        $this->assertSame('f', $fn('foo', 0, 1));
+        self::assertSame('f', $fn('foo', 0, 1));
     }
 
-    public function testExceptionsAreHandledTransparently()
+    public function testExceptionsAreHandledTransparently(): void
     {
         $expectedException = new RuntimeException();
         $fn = suppress_error(
@@ -55,20 +50,25 @@ class SuppressErrorTest extends AbstractTestCase
         $fn();
     }
 
-    public function testErrorHandlerNestingWorks()
+    public function testErrorHandlerNestingWorks(): void
     {
         $errorMessage = null;
-        set_error_handler(
-            static function($level, $message) use (&$errorMessage) {
+        \set_error_handler(
+            static function ($level, $message) use (&$errorMessage) {
                 $errorMessage = $message;
             }
         );
 
-        $fn = suppress_error('strpos');
-        $this->assertNull($fn([], 0));
+        $origFn = static function () {
+            \trigger_error('Some error', E_USER_ERROR);
+        };
 
-        strpos([], 0);
-        $this->assertSame('strpos() expects parameter 1 to be string, array given', $errorMessage);
-        restore_error_handler();
+        $fn = suppress_error($origFn);
+        self::assertNull($fn([], 0));
+
+        self::assertNull($errorMessage);
+        $origFn();
+        self::assertSame('Some error', $errorMessage);
+        \restore_error_handler();
     }
 }

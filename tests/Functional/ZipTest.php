@@ -1,35 +1,24 @@
 <?php
+
 /**
- * Copyright (C) 2011-2017 by Lars Strojny <lstrojny@php.net>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * @package   Functional-php
+ * @author    Lars Strojny <lstrojny@php.net>
+ * @copyright 2011-2021 Lars Strojny
+ * @license   https://opensource.org/licenses/MIT MIT
+ * @link      https://github.com/lstrojny/functional-php
  */
+
 namespace Functional\Tests;
 
 use ArrayIterator;
 use BadFunctionCallException;
 use stdClass;
+
 use function Functional\zip;
 
 class ZipTest extends AbstractTestCase
 {
-    public function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->list = ['value', 'value'];
@@ -38,11 +27,11 @@ class ZipTest extends AbstractTestCase
         $this->hashIterator = new ArrayIterator($this->hash);
     }
 
-    public function testZippingSameSizedArrays()
+    public function testZippingSameSizedArrays(): void
     {
         $result = [['one', 1, -1], ['two', 2, -2], ['three', 3, -3]];
-        $this->assertSame($result, zip(['one', 'two', 'three'], [1, 2, 3], [-1, -2, -3]));
-        $this->assertSame(
+        self::assertSame($result, zip(['one', 'two', 'three'], [1, 2, 3], [-1, -2, -3]));
+        self::assertSame(
             $result,
             zip(
                 new ArrayIterator(['one', 'two', 'three']),
@@ -52,26 +41,26 @@ class ZipTest extends AbstractTestCase
         );
     }
 
-    public function testZippingDifferentlySizedArrays()
+    public function testZippingDifferentlySizedArrays(): void
     {
         $result = [['one', 1, -1, true], ['two', 2, -2, false], ['three', 3, -3, null]];
-        $this->assertSame(
+        self::assertSame(
             $result,
             zip(['one', 'two', 'three'], [1, 2, 3], [-1, -2, -3], [true, false])
         );
     }
 
-    public function testZippingHashes()
+    public function testZippingHashes(): void
     {
         $result = ['foo' => [1, -1], 'bar' => [2, -2], 0 => [true, false]];
-        $this->assertSame(
+        self::assertSame(
             $result,
             zip(
                 ['foo' => 1, 'bar' => 2, true],
                 ['foo' => -1, 'bar' => -2, false, "ignore"]
             )
         );
-        $this->assertSame(
+        self::assertSame(
             $result,
             zip(
                 new ArrayIterator(['foo' => 1, 'bar' => 2, true]),
@@ -80,46 +69,46 @@ class ZipTest extends AbstractTestCase
         );
     }
 
-    public function testZippingWithCallback()
+    public function testZippingWithCallback(): void
     {
         $result = ['one1-11', 'two2-2', 'three3-3'];
-        $this->assertSame(
+        self::assertSame(
             $result,
             zip(
                 ['one', 'two', 'three'],
                 [1, 2, 3],
                 [-1, -2, -3],
                 [true, false],
-                function($one, $two, $three, $four) {
+                function ($one, $two, $three, $four) {
                     return $one . $two . $three . $four;
                 }
             )
         );
-        $this->assertSame(
+        self::assertSame(
             $result,
             zip(
                 new ArrayIterator(['one', 'two', 'three']),
                 new ArrayIterator([1, 2, 3]),
                 new ArrayIterator([-1, -2, -3]),
                 new ArrayIterator([true, false]),
-                function($one, $two, $three, $four) {
+                function ($one, $two, $three, $four) {
                     return $one . $two . $three . $four;
                 }
             )
         );
     }
 
-    public function testZippingArraysWithVariousElements()
+    public function testZippingArraysWithVariousElements(): void
     {
         $object = new stdClass();
-        $resource = stream_context_create();
+        $resource = \stream_context_create();
         $result = [
             [[1], $object, [2]],
             [null, 'foo', null],
             [$resource, null, 2]
         ];
 
-        $this->assertSame(
+        self::assertSame(
             $result,
             zip(
                 [[1], null, $resource],
@@ -129,28 +118,28 @@ class ZipTest extends AbstractTestCase
         );
     }
 
-    public function testZipSpecialCases()
+    public function testZipSpecialCases(): void
     {
-        $this->assertSame([], zip([]));
-        $this->assertSame([], zip([], []));
-        $this->assertSame([], zip([], [], function() {
+        self::assertSame([], zip([]));
+        self::assertSame([], zip([], []));
+        self::assertSame([], zip([], [], function () {
             throw new BadFunctionCallException('Should not be called');
         }));
     }
 
-    public function testPassNoCollectionAsFirstParam()
+    public function testPassNoCollectionAsFirstParam(): void
     {
         $this->expectArgumentError('Functional\zip() expects parameter 1 to be array or instance of Traversable');
         zip('invalidCollection');
     }
 
-    public function testPassNoCollectionAsSecondParam()
+    public function testPassNoCollectionAsSecondParam(): void
     {
         $this->expectArgumentError('Functional\zip() expects parameter 2 to be array or instance of Traversable');
         zip([], 'invalidCollection');
     }
 
-    public function testExceptionInCallback()
+    public function testExceptionInCallback(): void
     {
         $this->expectException('DomainException');
         $this->expectExceptionMessage('Callback exception');

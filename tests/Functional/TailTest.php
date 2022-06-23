@@ -1,88 +1,84 @@
 <?php
+
 /**
- * Copyright (C) 2011-2017 by Lars Strojny <lstrojny@php.net>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the 'Software'), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * @package   Functional-php
+ * @author    Lars Strojny <lstrojny@php.net>
+ * @copyright 2011-2021 Lars Strojny
+ * @license   https://opensource.org/licenses/MIT MIT
+ * @link      https://github.com/lstrojny/functional-php
  */
+
 namespace Functional\Tests;
 
 use ArrayIterator;
 use Functional\Exceptions\InvalidArgumentException;
+use Traversable;
+
 use function Functional\tail;
 
 class TailTest extends AbstractTestCase
 {
-    public function setUp()
+    /** @var string[] */
+    private $badArray;
+
+    /** @var Traversable */
+    private $badIterator;
+
+    protected function setUp(): void
     {
         parent::setUp();
         $this->list = [1, 2, 3, 4];
         $this->listIterator = new ArrayIterator($this->list);
-        $this->badArray = ['foo', 'bar', 'baz'];
+        $this->badArray = [-1, 0, 1];
         $this->badIterator = new ArrayIterator($this->badArray);
     }
 
-    public function test()
+    public function test(): void
     {
-        $fn = function($v, $k, $collection) {
+        $fn = function ($v, $k, $collection) {
             InvalidArgumentException::assertCollection($collection, __FUNCTION__, 1);
             return $v > 2;
         };
 
-        $this->assertSame([2 => 3, 3 => 4], tail($this->list, $fn));
-        $this->assertSame([2 => 3, 3 => 4], tail($this->listIterator, $fn));
-        $this->assertSame([], tail($this->badArray, $fn));
-        $this->assertSame([], tail($this->badIterator, $fn));
+        self::assertSame([2 => 3, 3 => 4], tail($this->list, $fn));
+        self::assertSame([2 => 3, 3 => 4], tail($this->listIterator, $fn));
+        self::assertSame([], tail($this->badArray, $fn));
+        self::assertSame([], tail($this->badIterator, $fn));
     }
 
-    public function testWithoutCallback()
+    public function testWithoutCallback(): void
     {
-        $this->assertSame([1 => 2, 2 => 3, 3 => 4], tail($this->list));
-        $this->assertSame([1 => 2, 2 => 3, 3 => 4], tail($this->list, null));
-        $this->assertSame([1 => 2, 2 => 3, 3 => 4], tail($this->listIterator));
-        $this->assertSame([1 => 2, 2 => 3, 3 => 4], tail($this->listIterator, null));
-        $this->assertSame([1 => 'bar', 2 => 'baz'], tail($this->badArray));
-        $this->assertSame([1 => 'bar', 2 => 'baz'], tail($this->badArray, null));
-        $this->assertSame([1 => 'bar', 2 => 'baz'], tail($this->badIterator));
-        $this->assertSame([1 => 'bar', 2 => 'baz'], tail($this->badIterator, null));
+        self::assertSame([1 => 2, 2 => 3, 3 => 4], tail($this->list));
+        self::assertSame([1 => 2, 2 => 3, 3 => 4], tail($this->list, null));
+        self::assertSame([1 => 2, 2 => 3, 3 => 4], tail($this->listIterator));
+        self::assertSame([1 => 2, 2 => 3, 3 => 4], tail($this->listIterator, null));
+        self::assertSame([1 => 0, 2 => 1], tail($this->badArray));
+        self::assertSame([1 => 0, 2 => 1], tail($this->badArray, null));
+        self::assertSame([1 => 0, 2 => 1], tail($this->badIterator));
+        self::assertSame([1 => 0, 2 => 1], tail($this->badIterator, null));
     }
 
-    public function testPassNonCallable()
+    public function testPassNonCallable(): void
     {
-        $this->expectArgumentError('Argument 2 passed to Functional\tail() must be callable');
+        $this->expectCallableArgumentError('Functional\tail', 2);
         tail($this->list, 'undefinedFunction');
     }
 
-    public function testExceptionIsThrownInArray()
+    public function testExceptionIsThrownInArray(): void
     {
         $this->expectException('DomainException');
         $this->expectExceptionMessage('Callback exception');
         tail($this->list, [$this, 'exception']);
     }
 
-    public function testExceptionIsThrownInCollection()
+    public function testExceptionIsThrownInCollection(): void
     {
         $this->expectException('DomainException');
         $this->expectExceptionMessage('Callback exception');
         tail($this->listIterator, [$this, 'exception']);
     }
 
-    public function testPassNoCollection()
+    public function testPassNoCollection(): void
     {
         $this->expectArgumentError('Functional\tail() expects parameter 1 to be array or instance of Traversable');
         tail('invalidCollection', 'strlen');

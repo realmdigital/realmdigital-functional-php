@@ -1,33 +1,47 @@
 <?php
+
 /**
- * Copyright (C) 2011-2017 by Lars Strojny <lstrojny@php.net>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * @package   Functional-php
+ * @author    Lars Strojny <lstrojny@php.net>
+ * @copyright 2011-2021 Lars Strojny
+ * @license   https://opensource.org/licenses/MIT MIT
+ * @link      https://github.com/lstrojny/functional-php
  */
+
 namespace Functional\Tests;
 
 use ArrayIterator;
+use Traversable;
+
 use function Functional\truthy;
 
 class TruthyTest extends AbstractTestCase
 {
-    public function setUp()
+    /** @var array */
+    private $trueArray;
+
+    /** @var Traversable */
+    private $trueIterator;
+
+    /** @var array */
+    private $trueHash;
+
+    /** @var Traversable */
+    private $trueHashIterator;
+
+    /** @var array */
+    private $falseArray;
+
+    /** @var Traversable */
+    private $falseIterator;
+
+    /** @var array */
+    private $falseHash;
+
+    /** @var Traversable */
+    private $falseHashIterator;
+
+    protected function setUp(): void
     {
         parent::setUp();
         $this->trueArray = [true, true, 'foo', true, true, 1];
@@ -40,21 +54,21 @@ class TruthyTest extends AbstractTestCase
         $this->falseHashIterator = new ArrayIterator($this->falseHash);
     }
 
-    public function test()
+    public function test(): void
     {
-        $this->assertTrue(truthy([]));
-        $this->assertTrue(truthy(new ArrayIterator([])));
-        $this->assertTrue(truthy($this->trueArray));
-        $this->assertTrue(truthy($this->trueIterator));
-        $this->assertTrue(truthy($this->trueHash));
-        $this->assertTrue(truthy($this->trueHashIterator));
-        $this->assertFalse(truthy($this->falseArray));
-        $this->assertFalse(truthy($this->falseIterator));
-        $this->assertFalse(truthy($this->falseHash));
-        $this->assertFalse(truthy($this->falseHashIterator));
+        self::assertTrue(truthy([]));
+        self::assertTrue(truthy(new ArrayIterator([])));
+        self::assertTrue(truthy($this->trueArray));
+        self::assertTrue(truthy($this->trueIterator));
+        self::assertTrue(truthy($this->trueHash));
+        self::assertTrue(truthy($this->trueHashIterator));
+        self::assertFalse(truthy($this->falseArray));
+        self::assertFalse(truthy($this->falseIterator));
+        self::assertFalse(truthy($this->falseHash));
+        self::assertFalse(truthy($this->falseHashIterator));
     }
 
-    public function testPassNoCollection()
+    public function testPassNoCollection(): void
     {
         $this->expectArgumentError('Functional\truthy() expects parameter 1 to be array or instance of Traversable');
         truthy('invalidCollection');

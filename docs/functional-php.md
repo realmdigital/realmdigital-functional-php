@@ -17,19 +17,22 @@
   - [truthy() & falsy()](#truthy--falsy)
   - [contains()](#contains)
   - [sort()](#sort)
-  - [Other:](#other)
+  - [Other](#other)
 - [Partial application](#partial-application)
   - [Introduction](#introduction)
   - [partial_left() & partial_right()](#partial_left--partial_right)
+  - [ary()](#ary)
   - [partial_any()](#partial_any)
   - [partial_method()](#partial_method)
+  - [converge()](#converge)
 - [Currying](#currying)
   - [curry()](#curry)
   - [curry_n()](#curry_n)
 - [Access functions](#access-functions)
   - [with()](#with)
   - [invoke_if()](#invoke_if)
-  - [invoke(), invoke_last(), invoke_first()](#invoke-invoke_last-invoke_first)
+  - [invoke()](#invoke)
+  - [invoke_first() & invoke_last()](#invoke_first--invoke_last)
   - [invoker()](#invoker)
   - [pluck()](#pluck)
   - [pick()](#pick)
@@ -37,6 +40,9 @@
   - [last_index_of()](#last_index_of)
   - [indexes_of()](#indexes_of)
   - [select_keys()](#select_keys)
+  - [omit_keys()](#omit_keys)
+  - [take_left()](#take_left)
+  - [take_right()](#take_right)
 - [Function functions](#function-functions)
   - [retry()](#retry)
   - [poll()](#poll)
@@ -44,7 +50,8 @@
   - [compose()](#compose)
   - [tail_recursion()](#tail_recursion)
   - [flip()](#flip)
-  - [Other](#other)
+  - [not](#not)
+  - [Other](#other-1)
 - [Mathematical functions](#mathematical-functions)
 - [Transformation functions](#transformation-functions)
   - [partition()](#partition)
@@ -53,16 +60,19 @@
   - [flatten()](#flatten)
   - [reduce_left() & reduce_right()](#reduce_left--reduce_right)
   - [intersperse()](#intersperse)
-  - [Other](#other-1)
+  - [Other](#other-2)
 - [Conditional functions](#conditional-functions)
   - [if_else()](#if_else)
   - [match()](#match)
 - [Higher order comparison functions](#higher-order-comparison-functions)
-  - [compare_on() & compare_object_hash_on()](#compare_on--compare_object_hash_on)
+  - [compare_on & compare_object_hash_on](#compare_on--compare_object_hash_on)
 - [Miscellaneous](#miscellaneous)
+  - [concat()](#concat)
   - [const_function()](#const_function)
   - [id()](#id)
   - [tap()](#tap)
+  - [repeat()](#repeat)
+  - [noop()](#noop)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -79,7 +89,7 @@ preferred way starting with PHP 5.6.
 ```php
 use function Functional\map;
 
-map(range(0, 100), function($v) {return $v + 1;});
+$emails = map($users, fn ($user) => $users->getEmail());
 ```
 
 # Function overview
@@ -87,65 +97,58 @@ map(range(0, 100), function($v) {return $v + 1;});
 
 ## every() & invoke()
 
-``Functional\every(array|Traversable $collection, callable $callback)``
+``Functional\every(array|Traversable $collection, callable $callback = null)``
 
 ```php
-<?php
 use function Functional\every;
-use function Functional\invoke;
 
-// If all users are active, set them all inactive
-if (every($users, function($user, $collectionKey, $collection) {return $user->isActive();})) {
-    invoke($users, 'setActive', [false]);
-}
+$allUsersAreActive = every($users, fn ($user, $key, $collection) => $user->isActive());
 ```
 
+If `$callback` is not provided then the `id()` function is used and `every` will return true if every value in the collection is truthy.
 
 ## some()
 
-``bool Functional\some(array|Traversable $collection, callable $callback)``
+``bool Functional\some(array|Traversable $collection, callable $callback = null)``
 
 ```php
-<?php
 use function Functional\some;
 
-if (some($users, function($user, $collectionKey, $collection) use($me) {return $user->isFriendOf($me);})) {
-    // One of those users is a friend of me
-}
+$iHaveAtLeastOneFriend = some($users, fn ($user, $key, $collection) => $user->isFriendOf($me));
 ```
 
+If `$callback` is not provided then the `id()` function is used and `some` will return true if at least one value in the collection is truthy.
 
 ## none()
 
 ``bool Functional\none(array|Traversable $collection, callable $callback)``
 
 ```php
-<?php
 use function Functional\none;
 
-if (none($users, function($user, $collectionKey, $collection) {return $user->isActive();})) {
-    // Do something with a whole list of inactive users
-}
+$noUsersAreActive = none($users, fn ($user, $key, $collection) => $user->isActive());
 ```
 
+If `$callback` is not provided then the `id()` function is used and `none` will return true if every value in the collection is falsey.
 
 ## reject() & select()
 
-``array Functional\select(array|Traversable $collection, callable $callback)``
+``array Functional\select(array|Traversable $collection, callable $callback = null)``
 
-``array Functional\reject(array|Traversable $collection, callable $callback)``
+``array Functional\reject(array|Traversable $collection, callable $callback = null)``
 
 ```php
-<?php
 use function Functional\select;
 use function Functional\reject;
 
-$fn = function($user, $collectionKey, $collection) {
-    return $user->isActive();
-};
+$fn = fn ($user, $key, $collection) => $user->isActive();
 $activeUsers = select($users, $fn);
 $inactiveUsers = reject($users, $fn);
 ```
+
+For both functions array keys are preserved.
+
+For both functions if a value for $callback is not provided then the `id()` function is used. For `select`, this means that only the truthy values in the collection will be returned. For `reject`, this means that only the falsey values in the collection will be returned.
 
 Alias for `Functional\select()` is `Functional\filter()`
 
@@ -159,14 +162,10 @@ Alias for `Functional\select()` is `Functional\filter()`
 ``array Functional\drop_last(array|Traversable $collection, callable $callback)``
 
 ```php
-<?php
 use function Functional\drop_first;
 use function Functional\drop_last;
 
-$fn = function($user, $index, $collection) {
-    return $index <= 2;
-};
-
+$fn = fn ($user, $index, $collection) => $index < 3;
 // All users except the first three
 drop_first($users, $fn);
 // First three users
@@ -181,7 +180,6 @@ Returns true or false if all elements in the collection are strictly true or fal
 ``bool Functional\false(array|Traversable $collection)``
 
 ```php
-<?php
 use function Functional\true;
 use function Functional\false;
 
@@ -204,7 +202,6 @@ Returns true or false if all elements in the collection evaluate to true or fals
 ``bool Functional\falsy(array|Traversable $collection)``
 
 ```php
-<?php
 use function Functional\truthy;
 use function Functional\falsy;
 
@@ -227,7 +224,6 @@ will be strict
 ``bool Functional\contains(array|Traversable $collection, mixed $value[, bool $strict = true])``
 
 ```php
-<?php
 use function Functional\contains;
 
 // Returns true
@@ -243,21 +239,16 @@ contains(['0', '1', '2'], 2, false);
 Sorts a collection with a user-defined function, optionally preserving array keys
 
 ```php
-<?php
 use function Functional\sort;
 
 // Sorts a collection alphabetically
-sort($collection, function($left, $right) {
-    return strcmp($left, $right);
-});
+sort($collection, fn ($left, $right) => strcmp($left, $right));
 
 // Sorts a collection alphabetically, preserving keys
-sort($collection, function($left, $right) {
-    return strcmp($left, $right);
-}, true);
+sort($collection, fn ($left, $right) => strcmp($left, $right), true);
 
 // Sorts a collection of users by age
-sort($collection, function($user1, $user2) {
+sort($collection, function ($user1, $user2) {
     if ($user1->getAge() == $user2->getAge()) {
         return 0;
     }
@@ -267,7 +258,7 @@ sort($collection, function($user1, $user2) {
 ```
 
 
-## Other:
+## Other
 
 `void Functional\each(array|Traversable $collection, callable $callback)`
 Applies a callback to each element
@@ -302,22 +293,16 @@ Partial application is a concept where a higher-order function returns a new fun
 to the new function. Let’s have a look at the following simple function that takes two parameters and subtracts them:
 
 ```php
-$subtractor = function ($a, $b) {
-    return $a - $b;
-};
-$subtractor(10, 20); // -> -10
+$subtractor = fn ($a, $b) => $a - $b;
+$subtractor(20, 10); // 10
 ```
 
 The same function can be reduced to two nested functions each with a single argument:
 
 ```php
-$subtractor = function ($a) {
-    return function ($b) use ($a) {
-        return $a - $b;
-    };
-}
-$partiallyAppliedSubtractor = $subtractor(10);
-$partiallyAppliedSubtractor(20); // -> -10
+$subtractor = fn ($a) => fn ($b) => $a - $b;
+$partiallyAppliedSubtractor = $subtractor(20);
+$partiallyAppliedSubtractor(10); // 10
 ```
 
 
@@ -329,8 +314,8 @@ our example again, this time using `partial_left`:
 ```php
 use function Functional\partial_left;
 
-$partiallyAppliedSubtractor = partial_left($subtractor, 10);
-$partiallyAppliedSubtractor(20); // -> -10
+$partiallyAppliedSubtractor = partial_left($subtractor, 20);
+$partiallyAppliedSubtractor(10); // 10
 ```
 
 A slightly different example with `partial_right` where we do the calculation `20 - 10`:
@@ -338,8 +323,27 @@ A slightly different example with `partial_right` where we do the calculation `2
 ```php
 use function Functional\partial_right;
 
-$partiallyAppliedSubtractor = partial_right($subtractor, 10);
-$partiallyAppliedSubtractor(20); // -> 10
+$partiallyAppliedSubtractor = partial_right($subtractor, 20);
+$partiallyAppliedSubtractor(10); // 10
+```
+
+## ary()
+
+`Functional\ary` (as in arity) takes a `callable` and a count and calls the `callable` with 
+that many arguments using `take_left` if positive, or `take_right` if negative. 
+Throws if passed 0.
+
+For example:
+
+```php
+use function Functional\ary;
+use function Functional\map;
+
+// This fails because map calls its callable with the element, index and the whole collection
+// map($array, 'ucfirst');
+
+// Using `ary`
+map($array, ary('ucfirst', 1)); // Passes only the first argument to `ucfirst`
 ```
 
 ## partial_any()
@@ -358,9 +362,8 @@ $elements = [
     'joanna',
     'patrick',
 ];
-$selected = select($elements, function ($element) {
-    return substr_count($element, 'jo');
-});
+
+$selected = select($elements, fn ($name) => substr_count($name, 'jo'));
 ```
 
 Instead of writing that slightly obnoxious callback, let’s use a partially applied function:
@@ -376,6 +379,7 @@ $elements = [
     'joanna',
     'patrick',
 ];
+
 $selected = select($elements, partial_any('substr_count', …, 'jo'));
 ```
 
@@ -388,12 +392,8 @@ list of objects by a predicate that belongs to the object:
 
 ```php
 use function Functional\select;
-use function Functional\partial_method;
 
-$users = [new User(), new User()];
-$registeredUsers = select($users, function (User $user) {
-    return $user->isRegistered();
-});
+$registeredUsers = select($users, fn ($user) => $user->isRegistered());
 ```
 
 We can rewrite the above example like this:
@@ -402,9 +402,34 @@ We can rewrite the above example like this:
 use function Functional\select;
 use function Functional\partial_method;
 
-$users = [new User(), new User()];
 $registeredUsers = select($users, partial_method('isRegistered'));
 ```
+
+## converge()
+
+``callable Functional\converge(callable $convergingFunction, callable[] branchingFunctions)``
+
+`converge` accepts a converging function and a list of branching functions and returns a new function.
+
+The returned function takes a variable number of arguments.
+
+The _converging function_ should take the same number of arguments as there are branching functions.
+
+Each _branching function_ should take the same number of arguments as the number of arguments passed in to the returned function.
+
+```php
+use function Functional\converge;
+
+function div($dividend, $divisor) {
+    return $dividend / $divisor;
+}
+
+$average = converge('div', ['array_sum', 'count']);
+$average([1, 2, 3, 4]); // 2.5
+```
+
+The returned function, in the above example it is named `$average`, passes each of its arguments to each branching function. `$average` then takes the return values of all the branching functions and passes each one as an argument to the converging function. The return value of the converging function is the return value of `$average`.
+
 
 # Currying
 
@@ -420,8 +445,8 @@ If we revisit the example used for partial application, the curried version woul
 use function Functional\curry;
 
 $curriedSubtractor = curry($subtractor);
-$subtractFrom10 = $curriedSubtractor(10)
-$subtractFrom10(20); // -> -10
+$subtractFrom10 = $curriedSubtractor(20);
+$subtractFrom10(10); // 10
 ```
 
 The difference becomes more salient with functions taking more than two parameters :
@@ -429,16 +454,12 @@ The difference becomes more salient with functions taking more than two paramete
 ```php
 use function Functional\curry;
 
-function add($a, $b, $c, $d) {
-    return $a + $b + $c + $d;
-}
-
-$curriedAdd = curry('add');
+$curriedAdd = curry(fn ($a, $b, $c, $d) => $a + $b + $c + $d);
 
 $add10 = $curriedAdd(10);
 $add15 = $add10(5);
 $add42 = $add15(27);
-$add42(10); // -> 52
+$add42(10); // 52
 ```
 
 Since PHP allows for optional parameters, you can decide if you want to curry them or not. The default is to not curry them.
@@ -446,49 +467,41 @@ Since PHP allows for optional parameters, you can decide if you want to curry th
 ```php
 use function Functional\curry;
 
-function add($a, $b, $c = 10) {
-    return $a + $b + $c;
-}
+$add = fn ($a, $b, $c = 10) => $a + $b + $c;
 
-// Curry only required parameters, the default, $c will always be 10
-$curriedAdd = curry('add', true);
+// Curry only required parameters. The default $c will always be 10.
+$curriedAdd = curry($add, true);
 
 // This time, 3 parameters will be curried.
-$curriedAddWithOptional = curry('add', false);
+$curriedAddWithOptional = curry($add, false);
 ```
 
-Starting with PHP7 and the implementation of the ["Uniform variable syntax"](https://wiki.php.net/rfc/uniform_variable_syntax), you can greatly simpliy the usage of curried functions.
+Starting with PHP7 and the implementation of the ["Uniform variable syntax"](https://wiki.php.net/rfc/uniform_variable_syntax), you can greatly simplify the usage of curried functions.
 
 ```php
 use function Functional\curry;
 
-function add($a, $b, $c, $d) {
-    return $a + $b + $c + $d;
-}
-
-$curriedAdd = curry('add');
-$curriedAdd(10)(5)(27)(10); // -> 52
+$curriedAdd = curry(fn ($a, $b, $c, $d) => $a + $b + $c + $d);
+$curriedAdd(10)(5)(27)(10); // 52
 ```
+
+_Note, that you cannot use `curry` on a flipped function. `curry` uses reflection to get the number of function arguments, but this is not possible on the function returned from `flip`.  Instead use `curry_n` on flipped functions._
 
 ## curry_n()
 
-`curry` uses reflection to determine the number of arguments, which can be slow depdening on your requirements. Also, you might want to curry only the first parameters, or your function expects a variable number of parameters. In all cases, you can use `curry_n` instead.
+`curry` uses reflection to determine the number of arguments, which can be slow depending on your requirements. Also, you might want to curry only the first parameters, or your function expects a variable number of parameters. In all cases, you can use `curry_n` instead.
 
 ```php
-use function Functional\curry;
+use function Functional\curry_n;
 
-function add($a, $b, $c, $d) {
-    return $a + $b + $c + $d;
-}
-
-$curriedAdd = curry_n(2, 'add');
+$curriedAdd = curry_n(2, fn ($a, $b, $c, $d) => $a + $b + $c + $d);
 
 $add10 = $curriedAdd(10);
 $add15 = $add10(5);
-$add15(27, 10); // -> 52
+$add15(27, 10); // 52
 ```
 
-Note that if you given a parameter bigger than the real number of parameters of your function, all extraneous parameters will simply be passed but ignored by the original function.
+Note that if you give a parameter bigger than the real number of parameters of your function, all extraneous parameters will simply be passed but ignored by the original function.
 
 # Access functions
 
@@ -496,52 +509,88 @@ Functional PHP comes with a set of invocation helpers that ease calling function
 
 
 ## with()
-Invoke a callback on a value if the value is not null
+Invoke a callback on a value if the value is not null.
+
+``Function\with(mixed $value, callable $callback, bool $invokeValue = true, mixed $default = null): mixed``
 
 ```php
-<?php
 use function Functional\with;
 
-$retval = with($value, function($value) {
-    $this->doSomethingWithValue($value);
+$retval = with(create_user('John Doe'), function ($user) {
+    send_welcome_email($user);
 
     return 'my_result';
 });
 ```
 
-`with()` returns whatever the callback returns. In the above example
-`$retval` would be `'my_result'`.
+`with()` returns whatever the callback returns. In the above example `$retval` would be `'my_result'`.
+
+If the value of `$value` is `null`, `with()` will return `$default` which defaults to be `null`.
 
 ## invoke_if()
 
 ``mixed Functional\invoke_if(mixed $object, string $methodName[, array $methodArguments, mixed $defaultValue])``
 
 ```php
-<?php
 use function Functional\invoke_if;
 
-// if $user is an object and has a public method getId() it is returned,
-// otherwise default value 0 (4th argument) is used
+// If $user is an object and has a public method getId(), the method's return value is returned,
+// otherwise the default value `0` (4th argument) is returned.
 $userId = invoke_if($user, 'getId', [], 0);
 ```
 
 
-## invoke(), invoke_last(), invoke_first()
+
+## invoke()
+
+Invokes method `$methodName` on each object in the `$collection` and returns the results of the call.
 
 ``array Functional\invoke(array|Traversable $collection, string $methodName[, array $methodArguments])``
-Invokes method `$methodName` on each object in the `$collection` and returns the results of the call
+
+```php
+use function Functional\invoke;
+
+// calls addAttendee($user) on each object in $meetings array
+invoke($meetings, 'addAttendee', $user); 
+```
+
+## invoke_first() & invoke_last()
+
+Invokes method `$methodName` on the first or last object in the `$collection` containing a callable method named `$methodName` and returns the results of the call.
 
 ``mixed Functional\invoke_first(array|Traversable $collection, string $methodName[, array $methodArguments])``
-Invokes method `$methodName` on the first object in the `$collection` and returns the results of the call
 
 ``mixed Functional\invoke_last(array|Traversable $collection, string $methodName[, array $methodArguments])``
-Invokes method `$methodName` on the last object in the `$collection` and returns the results of the call
 
+```php
+use function Functional\invoke_first;
+use function Functional\invoke_last;
+
+$meetings = [
+    new MandatoryEvent(),
+    new MandatoryEvent(),
+    new OptionalEvent(),
+    new MandatoryEvent(),
+    new OptionalEvent(),
+    new MandatoryEvent(),
+]; 
+
+// assuming only OptionalEvents can be delayed/changed...
+invoke_first($meetings, 'delayEvent', [30]); // calls delayEvent(30) on $meetings[2]
+invoke_last($meetings, 'changeRoom', ['Room 3']); // calls changeRoom('Room 3') on $meetings[4]
+```
 
 ## invoker()
+Returns a function that invokes method `$method` with arguments `$methodArguments` on the object.
 
 ``callable Functional\invoker(string $method[, array $methodArguments])``
-Returns a function that invokes method `$method` with arguments `$methodArguments` on the object
+
+```php
+use function Functional\invoker;
+
+$setLocationToMunich = invoker('updateLocation', ['Munich', 'Germany']);
+$setLocationToMunich($user); // calls $user->updateLocation('Munich', 'Germany') 
+```
 
 ## pluck()
 Fetch a single property from a collection of objects or arrays.
@@ -549,7 +598,6 @@ Fetch a single property from a collection of objects or arrays.
 ``array Functional\pluck(array|Traversable $collection, string|integer|float|null $propertyName)``
 
 ```php
-<?php
 use function Functional\pluck;
 
 $names = pluck($users, 'name');
@@ -563,13 +611,12 @@ If no such index exists, return the default value.
 ``array Functional\pick(array|Traversable $collection, mixed $propertyName, mixed $default, callable $callback)``
 
 ```php
-<?php
 use function Functional\pick;
 
 $array = ['one' => 1, 'two' => 2, 'three' => 3];
-pick($array, 'one'); // -> 1
-pick($array, 'ten'); // -> null
-pick($array, 'ten', 10); // -> 10
+pick($array, 'one'); // 1
+pick($array, 'ten'); // null
+pick($array, 'ten', 10); // 10
 ```
 
 
@@ -579,7 +626,6 @@ Returns the first index holding specified value in the collection. Returns false
 ``array Functional\first_index_of(array|Traversable $collection, mixed $value)``
 
 ```php
-<?php
 use function Functional\first_index_of;
 
 // $index will be 0
@@ -593,7 +639,6 @@ Returns the last index holding specified value in the collection. Returns false 
 ``array Functional\last_index_of(array|Traversable $collection, mixed $value)``
 
 ```php
-<?php
 use function Functional\last_index_of;
 
 // $index will be 1
@@ -607,7 +652,6 @@ Returns a list of array indexes, either matching the predicate or strictly equal
 ``array Functional\indexes_of(Traversable|array $collection, mixed|callable $value)``
 
 ```php
-<?php
 use function Functional\indexes_of;
 
 // $indexes will be array(0, 2)
@@ -619,12 +663,48 @@ $indexes = indexes_of(['value', 'value2', 'value'], 'value');
 Returns an array containing only those entries in the array/Traversable whose key is in the supplied keys.
 
 ```php
-<?php
-
 use function Functional\select_keys;
 
 // $array will be ['foo' => 1, 'baz' => 3]
-$array = select_keys(['foo' => 1, 'bar' => 2', 'baz' => 3], ['foo', 'baz']);
+$array = select_keys(['foo' => 1, 'bar' => 2, 'baz' => 3], ['foo', 'baz']);
+```
+
+## omit_keys()
+
+Returns an array containing only those entries in the array/Traversable whose key is not in the supplied keys.
+
+```php
+use function Functional\omit_keys;
+
+// $array will be ['bar' => 2]
+$array = omit_keys(['foo' => 1, 'bar' => 2, 'baz' => 3], ['foo', 'baz']);
+```
+
+## take_left()
+
+Creates a slice of `$collection` with `$count` elements taken from the beginning. If the collection has less than `$count` elements, the whole collection will be returned as an array.
+
+``array Functional\take_left(Traversable|array $collection, int $count)``
+
+```php
+use function Functional\take_left;
+
+take_left([1, 2, 3], 2); // [1, 2]
+```
+
+## take_right()
+
+Creates a slice of `$collection` with `$count` elements taken from the end. If the collection has less than `$count` elements, the whole collection will be returned as an array.
+
+This function will reorder and reset the integer array indices by default. This behaviour can be changed by setting `$preserveKeys` to `true`. String keys are always preserved, regardless of this parameter.
+
+``array Functional\take_right(Traversable|array $collection, int $count, bool $preserveKeys = false)``
+
+```php
+use function Functional\take_right;
+
+take_right([1, 2, 3], 2); // [2, 3]
+take_right(['a', 'b', 'c'], 2, true); // [1 => 'b', 2 => 'c']
 ```
 
 # Function functions
@@ -639,11 +719,11 @@ Retry a callback until the number of retries are reached or the callback does no
 use function Functional\retry;
 use function Functional\sequence_exponential;
 
-assert_options(ASSERT_CALLBACK, function () {throw new Exception('Assertion failed');});
+assert_options(ASSERT_CALLBACK, fn () => throw new Exception('Assertion failed'));
 
 // Assert that a file exists 10 times with an exponential back-off
 retry(
-    function() {assert(file_exists('/tmp/lockfile'));},
+    fn () => assert(file_exists('/tmp/lockfile')),
     10,
     sequence_exponential(1, 100)
 );
@@ -659,9 +739,7 @@ use function Functional\sequence_linear;
 
 // Poll if a file exists for 10,000 microseconds with a linearly growing back-off starting at 100 milliseconds
 poll(
-    function() {
-        return file_exists('/tmp/lockfile');
-    },
+    fn () => file_exists('/tmp/lockfile'),
     10000,
     sequence_linear(100, 1)
 );
@@ -675,15 +753,8 @@ Return a new function that captures the return value of $callback in $result and
 ```php
 use function Functional\capture;
 
-$fn = capture(
-    function() {
-        return 'Hello world';
-    },
-    $result
-);
-
+$fn = capture(fn () => 'Hello world', $result);
 $fn();
-
 var_dump($result); // 'Hello world'
 ```
 
@@ -694,14 +765,11 @@ Return a new function that composes multiple functions into a single callable
 ```php
 use function Functional\compose;
 
-$plus2 = function ($x) { return $x + 2; };
-$times4 = function ($x) { return $x * 4; };
+$plus2 = fn ($x) => $x + 2;
+$times4 = fn ($x) => $x * 4;
 
 $composed = compose($plus2, $times4);
-
-$result = array_map($composed, array(1, 2, 5, 8));
-
-var_dump($result); // array(12, 16, 28, 40)
+array_map($composed, [1, 2, 5, 8]); // [12, 16, 28, 40]
 ```
 
 
@@ -711,57 +779,52 @@ Return an new function that decorates given function with tail recursion optimiz
 
 
 ```php
-<?php
-
 use function Functional\tail_recursion;
 
-$sum_of_range = tail_recursion(function ($from, $to, $acc = 0) use (&$sum_of_range) {
+$sumOfRange = tail_recursion(function ($from, $to, $acc = 0) use (&$sumOfRange) {
     if ($from > $to) {
         return $acc;
     }
-    return $sum_of_range($from + 1, $to, $acc + $from);
+    
+    return $sumOfRange($from + 1, $to, $acc + $from);
 });
 
-var_dump($sum_of_range(1, 10000)); // 50005000;
-
+$sumOfRange(1, 10000); // 50005000;
 ```
 
 ## flip()
-Return a new function with the argument order flipped. This can be useful when currying  functions like `filter` to provide the data last.
+Return a new function with the argument order flipped. This can be useful when currying functions like `filter` to provide the data last.
 
 ```php
 use function Functional\flip;
 use function Functional\curry;
 
 $filter = curry(flip('Functional\filter'));
-$get_even = $filter(function($number) {
-    return $number % 2 == 0;
-});
-
-var_dump($get_even([1, 2, 3, 4])); // [2, 4]
-
+$getEven = $filter(fn ($number) => $number % 2 === 0);
+$getEven([1, 2, 3, 4]); // [2, 4]
 ```
 
+_Note, that you cannot use `curry` on a flipped function. `curry` uses reflection to get the number of function arguments, but this is not possible on the function returned from `flip`.  Instead use `curry_n` on flipped functions._
+
 ## not
-Return a new function which takes the same arguments as the original function, but returns the logical negation of it's result.
+Return a new function which takes the same arguments as the original function, but returns the logical negation of its result.
 
 ```php
 use function Functional\not;
 
-$is_even = function ($number) {
-    return $number % 2 == 0;
-};
-$is_odd = not($is_even);
-
-var_dump($is_odd(1)); // true
-var_dump($is_odd(2)); // false
-
+$isEven = fn ($number) => $number % 2 === 0;
+$isOdd = not($isEven);
+$isOdd(1); // true
+$isOdd(2); // false
 ```
 
 ## Other
 
-`mixed Functional\memoize(callable $callback[, array $arguments = []], [mixed $key = null]])`
+`mixed Functional\memoize(callable $callback[, array $arguments = []], [string|array $key = null]])`
 Returns and stores the result of the function call. Second call to the same function will return the same result without calling the function again
+
+`string value_to_key(...$values)`
+Builds an array key out of any values, correctly handling object identity and traversables. Resources are not supported
 
 # Mathematical functions
 
@@ -805,17 +868,13 @@ final partition.
 ``array Functional\partition(array|Traversable $collection, callable $callback ...)``
 
 ```php
-<?php
 use function Functional\partition;
 
 list($admins, $guests, $users) = partition(
     $collection,
-    function($user) {
-        return $user->isAdmin();
-    },
-    function($user) {
-        return $user->isGuest();
-    });
+    fn ($user) => $user->isAdmin(),
+    fn ($user) => $user->isGuest()
+);
 ```
 
 
@@ -825,12 +884,9 @@ Splits a collection into groups by the index returned by the callback
 ``array Functional\group(array|Traversable $collection, callable $callback)``
 
 ```php
-<?php
 use function Functional\group;
 
-$groupedUser = group($collection, function($user) {
-    return $user->getGroup()->getName();
-});
+$groupedUser = group($users, fn ($user) => $user->getGroup()->getName());
 ```
 
 
@@ -842,20 +898,15 @@ Recombines arrays by index and applies a callback optionally
 ``array Functional\zip_all(array|Traversable $collection1[, array|Traversable ...[, callable $callback]])``
 
 ```php
-<?php
 use function Functional\zip;
 
-// Returns [['one', 1], ['two', 2], ['three', 3]]
-zip(['one', 'two', 'three'], [1, 2, 3]);
+zip(['one', 'two', 'three'], [1, 2, 3]); // [['one', 1], ['two', 2], ['three', 3]]
 
-// Returns ['one|1', 'two|2', 'three|3']
 zip(
     ['one', 'two', 'three'],
     [1, 2, 3],
-    function($one, $two) {
-        return $one . '|' . $two;
-    }
-);
+    fn ($one, $two) => $one . '|' . $two
+); // ['one|1', 'two|2', 'three|3']
 ```
 
 ``zip()`` uses the keys of the first input array. ``zip_all()`` uses all the keys present in the input arrays.
@@ -866,11 +917,9 @@ Takes a nested combination of collections and returns their contents as a single
 ``array Functional\flatten(array|Traversable $collection)``
 
 ```php
-<?php
 use function Functional\flatten;
 
-$flattened = flatten([1, 2, 3, [1, 2, 3, 4], 5]);
-// [1, 2, 3, 1, 2, 3, 4, 5];
+$flattened = flatten([1, 2, 3, [1, 2, 3, 4], 5]); // [1, 2, 3, 1, 2, 3, 4, 5];
 ```
 
 
@@ -884,19 +933,11 @@ with the last element.
 ``mixed Functional\reduce_right(array|Traversable $collection, callable $callback[, $initial = null])``
 
 ```php
-<?php
 use function Functional\reduce_left;
 use function Functional\reduce_right;
 
-// $str will be "223"
-$str = reduce_left([2, 3], function($value, $index, $collection, $reduction) {
-    return $reduction . $value;
-}, 2);
-
-// $str will be "232"
-$str = reduce_right([2, 3], function($value, $index, $collection, $reduction) {
-    return $reduction . $value;
-}, 2);
+$str = reduce_left([2, 3], fn ($value, $index, $collection, $reduction) => $reduction . $value, 2); // '223'
+$str = reduce_right([2, 3], fn ($value, $index, $collection, $reduction) => $reduction . $value, 2); // '232'
 ```
 
 
@@ -905,7 +946,23 @@ $str = reduce_right([2, 3], function($value, $index, $collection, $reduction) {
 Insert a given value between each element of a collection.
 
 ```php
-intersperse(['a', 'b', 'c'], '-') === ['a', '-', 'b', '-', 'c']
+use Functional\intersperse;
+
+intersperse(['a', 'b', 'c'], '-'); // ['a', '-', 'b', '-', 'c'];
+```
+
+## entries() & from_entries()
+
+Inspired by JavaScript’s `Object.entries()` and `Object.from_entries()` and Python’s `enumerate()`, convert a key-value
+map into an array of key-value pairs, respectively.
+
+```php
+use function Functional\entries;
+use function Functional\from_entries;
+
+$map   = ['one' => 1, 'two' => 2, 'three' => 3];
+$pairs = entries($map); // [['one', 1], ['two', 2], ['three', 3]]
+$map2  = from_entries($pairs); // $map === $map2
 ```
 
 ## Other
@@ -926,18 +983,11 @@ Returns a new function that will call `$then` if the return of `$if` is truthy, 
 All three functions will be called with the given argument.
 
 ```php
-<?php
-
 use function Functional\greater_than;
 use function Functional\if_else;
 
-$ifItIs = function ($value) {
-  return "Yes, {$value} is greater than 1";
-};
-
-$ifItIsNot = function ($value) {
-  return "Nop, {$value} isn't greater than 1";
-};
+$ifItIs = fn ($value) => "Yes, {$value} is greater than 1";
+$ifItIsNot = fn ($value) => "Nop, {$value} isn't greater than 1";
 
 $message = if_else(greater_than(1), $ifItIs, $ifItIsNot);
 
@@ -953,22 +1003,12 @@ Returns a new function that behaves like a match operator.
 It stops on the first match and if none of the conditions matches, `null` is returned.
 
 ```php
-<?php
-
 use function Functional\greater_than_or_equal;
 use function Functional\match;
 
-$preschool = function ($age) {
-  return "With {$age} you go to preschool";
-};
-
-$primary = function ($age) {
-  return "With {$age} you go to primary school";
-};
-
-$secondary = function ($age) {
-  return "With {$age} you go to secondary school";
-};
+$preschool = fn ($age) => "At {$age} you go to preschool";
+$primary = fn ($age) => "At {$age} you go to primary school";
+$secondary = fn ($age) => "At {$age} you go to secondary school";
 
 $stage = match([
   [greater_than_or_equal(12), $secondary],
@@ -976,9 +1016,9 @@ $stage = match([
   [greater_than_or_equal(4), $preschool],
 ]);
 
-echo $stage(4); // With 4 you go to preschool
-echo $stage(5); // With 5 you go to primary school
-echo $stage(13); // With 13 you go to secondary school
+echo $stage(4); // At 4 you go to preschool
+echo $stage(5); // At 5 you go to primary school
+echo $stage(13); // At 13 you go to secondary school
 ```
 
 # Higher order comparison functions
@@ -999,47 +1039,58 @@ just a shortcut to `compare_on` as it composes the given key function with `spl_
 # Miscellaneous
 
 ## concat()
-Concatenates zero or more strings
+Concatenates zero or more strings.
 
 ```php
-<?php
 use function Functional\concat;
 
-$fooBar = concat('foo', 'bar');
+$fooBar = concat('foo', 'bar'); // 'foobar'
 ```
 
 ## const_function()
-Returns new function, that will constantly return its first argument (constant function)
+Returns a new function that will constantly return its first argument.
 
 ```php
-<?php
 use function Functional\const_function;
 
 $one = const_function(1);
-$one(); // -> 1
+$one(); // 1
 ```
 
-
 ## id()
-Proxy function, that do nothing, except returning its first argument
+Proxy function that does nothing except returning its first argument.
 
 ```php
-<?php
 use function Functional\id;
 
-1 === id(1);
+id(1); // 1
 ```
 
 ## tap()
 ``mixed tap(mixed $value, callable $callback)``
 
-Call the given Closure with the given value, then return the value.
+Calls the given Closure with the given value, then returns the value.
 
 ```php
-<?php 
 use function Functional\tap;
-tap(User::create('John Doe'), function (User $user) {
-    UserService::sendWelcomeEmail($user);
-})->login();
+
+tap(create_user('John Doe'), fn ($user) => send_welcome_email($user))->login();
 ```
 
+## repeat()
+
+Creates and returns a function that can be used to execute the given closure multiple times.
+
+```php
+use function Functional\repeat;
+
+repeat(function () {
+    echo 'foo';
+})(3); // prints 'foofoofoo' to screen
+``` 
+
+## noop()
+
+A no-operation function, i.e. a function that does nothing.
+
+``void Functional\noop()``

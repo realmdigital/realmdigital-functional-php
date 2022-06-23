@@ -1,25 +1,13 @@
 <?php
+
 /**
- * Copyright (C) 2011-2017 by Lars Strojny <lstrojny@php.net>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * @package   Functional-php
+ * @author    Lars Strojny <lstrojny@php.net>
+ * @copyright 2011-2021 Lars Strojny
+ * @license   https://opensource.org/licenses/MIT MIT
+ * @link      https://github.com/lstrojny/functional-php
  */
+
 namespace Functional\Tests;
 
 use function Functional\last_index_of;
@@ -28,39 +16,41 @@ class LastIndexOfTest extends AbstractTestCase
 {
     use IndexesTrait;
 
-    public function test()
+    public function test(): void
     {
-        $this->assertSame(0, last_index_of($this->list, 'value1'));
-        $this->assertSame(0, last_index_of($this->listIterator, 'value1'));
-        $this->assertSame(2, last_index_of($this->list, 'value'));
-        $this->assertSame(2, last_index_of($this->listIterator, 'value'));
-        $this->assertSame(3, last_index_of($this->list, 'value2'));
-        $this->assertSame(3, last_index_of($this->listIterator, 'value2'));
-        $this->assertSame('k3', last_index_of($this->hash, 'val1'));
-        $this->assertSame('k3', last_index_of($this->hashIterator, 'val1'));
-        $this->assertSame('k2', last_index_of($this->hash, 'val2'));
-        $this->assertSame('k2', last_index_of($this->hashIterator, 'val2'));
-        $this->assertSame('k4', last_index_of($this->hash, 'val3'));
-        $this->assertSame('k4', last_index_of($this->hashIterator, 'val3'));
+        self::assertSame(0, last_index_of($this->list, 'value1'));
+        self::assertSame(0, last_index_of($this->listIterator, 'value1'));
+        self::assertSame(2, last_index_of($this->list, 'value'));
+        self::assertSame(2, last_index_of($this->listIterator, 'value'));
+        self::assertSame(3, last_index_of($this->list, 'value2'));
+        self::assertSame(3, last_index_of($this->listIterator, 'value2'));
+        self::assertSame('k3', last_index_of($this->hash, 'val1'));
+        self::assertSame('k3', last_index_of($this->hashIterator, 'val1'));
+        self::assertSame('k2', last_index_of($this->hash, 'val2'));
+        self::assertSame('k2', last_index_of($this->hashIterator, 'val2'));
+        self::assertSame('k4', last_index_of($this->hash, 'val3'));
+        self::assertSame('k4', last_index_of($this->hashIterator, 'val3'));
     }
 
-    public function testIfValueCouldNotBeFoundFalseIsReturned()
+    public function testIfValueCouldNotBeFoundFalseIsReturned(): void
     {
-        $this->assertFalse(last_index_of($this->list, 'invalidValue'));
-        $this->assertFalse(last_index_of($this->listIterator, 'invalidValue'));
-        $this->assertFalse(last_index_of($this->hash, 'invalidValue'));
-        $this->assertFalse(last_index_of($this->hashIterator, 'invalidValue'));
+        self::assertFalse(last_index_of($this->list, 'invalidValue'));
+        self::assertFalse(last_index_of($this->listIterator, 'invalidValue'));
+        self::assertFalse(last_index_of($this->hash, 'invalidValue'));
+        self::assertFalse(last_index_of($this->hashIterator, 'invalidValue'));
     }
 
-    public function testPassCallback()
+    public function testPassCallback(): void
     {
-        $this->assertSame(
+        self::assertSame(
             3,
-            last_index_of($this->list, function($element) {return $element;})
+            last_index_of($this->list, function ($element) {
+                return $element;
+            })
         );
     }
 
-    public function testPassNoCollection()
+    public function testPassNoCollection(): void
     {
         $this->expectArgumentError('Functional\last_index_of() expects parameter 1 to be array or instance of Traversable');
         last_index_of('invalidCollection', 'idx');

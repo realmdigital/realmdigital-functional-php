@@ -1,34 +1,36 @@
 <?php
+
 /**
- * Copyright (C) 2011-2017 by Lars Strojny <lstrojny@php.net>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * @package   Functional-php
+ * @author    Lars Strojny <lstrojny@php.net>
+ * @copyright 2011-2021 Lars Strojny
+ * @license   https://opensource.org/licenses/MIT MIT
+ * @link      https://github.com/lstrojny/functional-php
  */
+
 namespace Functional\Tests;
 
 use ArrayIterator;
 use Functional\Exceptions\InvalidArgumentException;
+use Traversable;
+
 use function Functional\some;
 
 class SomeTest extends AbstractTestCase
 {
-    public function setUp()
+    /** @var string[] */
+    private $goodArray;
+
+    /** @var Traversable|string[] */
+    private $goodIterator;
+
+    /** @var string[] */
+    private $badArray;
+
+    /** @var Traversable|string[] */
+    private $badIterator;
+
+    protected function setUp(): void
     {
         parent::setUp();
         $this->goodArray = ['value', 'wrong'];
@@ -37,41 +39,49 @@ class SomeTest extends AbstractTestCase
         $this->badIterator = new ArrayIterator($this->badArray);
     }
 
-    public function test()
+    public function test(): void
     {
-        $this->assertTrue(some($this->goodArray, [$this, 'functionalCallback']));
-        $this->assertTrue(some($this->goodIterator, [$this, 'functionalCallback']));
-        $this->assertFalse(some($this->badArray, [$this, 'functionalCallback']));
-        $this->assertFalse(some($this->badIterator, [$this, 'functionalCallback']));
+        self::assertTrue(some($this->goodArray, [$this, 'functionalCallback']));
+        self::assertTrue(some($this->goodIterator, [$this, 'functionalCallback']));
+        self::assertFalse(some($this->badArray, [$this, 'functionalCallback']));
+        self::assertFalse(some($this->badIterator, [$this, 'functionalCallback']));
     }
 
-    public function testPassNonCallable()
+    public function testPassNonCallable(): void
     {
-        $this->expectArgumentError("Argument 2 passed to Functional\some() must be callable");
+        $this->expectCallableArgumentError('Functional\some', 2);
         some($this->goodArray, 'undefinedFunction');
     }
 
-    public function testPassNoCollection()
+    public function testPassNoCallable(): void
+    {
+        self::assertTrue(some($this->goodArray));
+        self::assertTrue(some($this->goodIterator));
+        self::assertTrue(some($this->badArray));
+        self::assertTrue(some($this->badIterator));
+    }
+
+    public function testPassNoCollection(): void
     {
         $this->expectArgumentError('Functional\some() expects parameter 1 to be array or instance of Traversable');
         some('invalidCollection', 'strlen');
     }
 
-    public function testExceptionThrownInArray()
+    public function testExceptionThrownInArray(): void
     {
         $this->expectException('DomainException');
         $this->expectExceptionMessage('Callback exception');
         some($this->goodArray, [$this, 'exception']);
     }
 
-    public function testExceptionThrownInCollection()
+    public function testExceptionThrownInCollection(): void
     {
         $this->expectException('DomainException');
         $this->expectExceptionMessage('Callback exception');
         some($this->goodIterator, [$this, 'exception']);
     }
 
-    public function functionalCallback($value, $key, $collection)
+    public function functionalCallback($value, $key, $collection): bool
     {
         InvalidArgumentException::assertCollection($collection, __FUNCTION__, 3);
         return $value == 'value' && $key === 0;
